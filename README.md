@@ -23,6 +23,20 @@ The application is designed to be responsive to new files, file changes, and fil
 
     *This allows the application to communicate with the Core. As an alternative, you can also use the IP address of the host system.*
 
+De adaugat la core docker-compose.yml
+    ```sh
+        networks:
+        - core
+
+    networks:
+    core:
+        external: true
+    ```
+
+    ```sh
+    docker network create core
+    ```
+
 3. Build and start the Streamfile-Importer
     ```sh
     git clone https://github.com/AndreyBrigunet/core-process.git

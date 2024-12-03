@@ -32,7 +32,7 @@ process_config = ProcessConfig(
         ProcessConfigIO(
             address="dummy",
             id="input_0",
-            options=[            
+            options=[
                 "-fflags", "+genpts",
                 "-thread_queue_size", "512",
                 "-probesize", "5000000",
@@ -116,7 +116,7 @@ def create_process_config():
     process_list = []
     for core_rtmp in core_rtmp_list:
         rtmp_name = core_rtmp.name.split('/')[-1]
-        
+
         if is_valid_stream_key(rtmp_name):
             config = deepcopy(process_config)
             config.id = rtmp_name
@@ -168,12 +168,20 @@ def clear_core_processes(rtmp_process_list: list):
 
 
 # core connection and login
-client = Client(
-    base_url=CORE_ADDRESS,
-    username=CORE_USERNAME,
-    password=CORE_PASSWORD
-)
-client.login()
+try:
+    client = Client(
+        base_url=CORE_ADDRESS,
+        username=CORE_USERNAME,
+        password=CORE_PASSWORD
+    )
+    client.login()
+except Exception as e:
+    error_message = (
+        f"Error base_url: {CORE_ADDRESS}, "
+        f"username: {CORE_USERNAME}, password: {CORE_PASSWORD}: {e}"
+    )
+    print(error_message)
+    raise RuntimeError(error_message)
 
 # start the loop
 try:
@@ -186,7 +194,7 @@ try:
             execution_time = end_time - start_time
             print(f"timpul executie: v3_rtmp_get: {execution_time:.2f} secunde")
             # print(core_rtmp_list)
-            
+
             # if core_rtmp_list:
             start_time = time.time()
             core_process_list = client.v3_process_get_list(reference=PROCESS_REFERENCE)
@@ -195,18 +203,18 @@ try:
             print(f"timpul executie: v3_process_get_list: {execution_time:.2f} secunde")
 
             # print(core_process_list)
-        
+
             # create a temp. list of stream file configs
             input_process_list = create_process_config()
             # print(input_process_list)
 
-            
+
             # create or update stream file processes
             create_processes(rtmp_process_list=input_process_list)
 
             # remove dropped stream file on core
             clear_core_processes(rtmp_process_list=input_process_list)
-        
+
         except Exception as e:
             print(f"error: {e}")
 
