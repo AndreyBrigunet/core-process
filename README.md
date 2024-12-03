@@ -25,14 +25,10 @@ The application is designed to be responsive to new files, file changes, and fil
 
 3. Build and start the Streamfile-Importer
     ```sh
-    git clone github.com/datarhei/core-streamfile
-    cd core-streamfile
-    docker build -t core-streamfile .
-    docker run -d --name core-streamfile \
-        -v $PWD/streamfiles:/streamfiles \
-        -e CORE_ADDRESS=http://172.17.0.2:8080 \
-        -e PROCESS_OUTPUT_PROTOCOL="hls,rtmp,srt" \
-        core-streamfile
+    git clone https://github.com/AndreyBrigunet/core-process.git
+    cd core-process
+    docker compose build
+    docker compose up -d
     ```
 
 4. Create a streamfile in the `streamfiles` directory   
