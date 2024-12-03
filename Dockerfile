@@ -1,4 +1,4 @@
-from python:alpine
+from python:3.9-alpine
 
 COPY . /app
 WORKDIR /app

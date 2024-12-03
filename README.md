@@ -31,35 +31,12 @@ The application is designed to be responsive to new files, file changes, and fil
     docker compose up -d
     ```
 
-4. Create a streamfile in the `streamfiles` directory   
-    ```sh
-    echo 'https://demo.datarhei.com/memfs/1f33d538-d714-4c7e-9559-46ddb8118f03.m3u8' > mystream.stream
-    ```
-
-    The file content (stream url) can be any streaming url such as HTTP, RTSP, RTMP, SRT.
-
-    *The default `SYNC_INTERVAL_SECONDS` is 10.*
-
-5. Check the stream is running
-    - `Core API`: http://127.0.0.1:8080/api/v3/process/mystream
-    - `HLS` Stream: http://127.0.0.1:8080/memfs/mystream.m3u8
-    - `RTMP` Stream: rtmp://127.0.0.1/mystream
-    - `SRT` Stream: srt://127.0.0.1:6000/?streamid=mystream
 
 ## Enviroments
 
 - `CORE_ADDRESS` (default: unset)
 - `CORE_USERNMAE` (default: unset)
 - `CORE_PASSWORD` (default: unset)
-- `PROCESS_OUTPUT_PROTOCOL` (default: hls, max: hls,rtmp,srt)
-- `PROCESS_REFERENCE` (default: streamfile)
-- `STREAMFILE_FOLDER` (default: /streamfiles)
+- `PROCESS_REFERENCE` (default: rtmp:hls)
 - `SYNC_INTERVAL_SECONDS` (default: 10)
 
-## Contributing
-
-We welcome contributions to this project. If you find a bug or have a suggestion for a new feature, please create an issue on the repository's issue tracker. If you would like to contribute code, please fork the repository and create a pull request with your changes.
-
-# License
-
-This application is released under the MIT License.

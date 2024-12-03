@@ -14,8 +14,8 @@ from core_client.base.models.v3 import (
 )
 
 # Local
-from dotenv import load_dotenv
-load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 
 CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
@@ -93,7 +93,7 @@ process_config = ProcessConfig(
     ),
     autostart=True,
     reconnect=True,
-    reconnect_delay_seconds=2,
+    reconnect_delay_seconds=4,
     stale_timeout_seconds=20,
 )
 
