@@ -17,7 +17,7 @@ This Python application (Python 3.10, [Core PyClient](https://github.com/datarhe
         external: true
     ```
 
-3. Build and start the Streamfile-Importer
+3. Build si start
     ```sh
     git clone https://github.com/AndreyBrigunet/core-process.git
     cd core-process
