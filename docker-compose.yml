@@ -4,14 +4,10 @@ services:
     build:
       context: .
     container_name: core-process
-    entrypoint: ["/bin/bash", "/app/update_env.sh"]
     env_file: 
-      - /app/.env
+      - .env
     networks:
       - core
-    volumes:
-      - ./update_env.sh:/app/update_env.sh
-      - ./env_files:/app/.env
 
 networks:
   core:
