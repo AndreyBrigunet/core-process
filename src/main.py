@@ -177,8 +177,10 @@ try:
     client.login()
 except Exception as e:
     error_message = (
-        f"Error base_url: {CORE_ADDRESS}, "
-        f"username: {CORE_USERNAME}, password: {CORE_PASSWORD}: {e}"
+        f"base_url: {CORE_ADDRESS}\n"
+        f"username: {CORE_USERNAME}\n"
+        f"password: {CORE_PASSWORD}\n"
+        f"Error: {e}"
     )
     print(error_message)
     raise RuntimeError(error_message)
@@ -192,7 +194,7 @@ try:
             core_rtmp_list = client.v3_rtmp_get()
             end_time = time.time() 
             execution_time = end_time - start_time
-            print(f"timpul executie: v3_rtmp_get: {execution_time:.2f} secunde")
+            print(f"rtmp_get_list: {execution_time:.2f} sec")
             # print(core_rtmp_list)
 
             # if core_rtmp_list:
@@ -200,7 +202,7 @@ try:
             core_process_list = client.v3_process_get_list(reference=PROCESS_REFERENCE)
             end_time = time.time() 
             execution_time = end_time - start_time
-            print(f"timpul executie: v3_process_get_list: {execution_time:.2f} secunde")
+            print(f"process_get_list: {execution_time:.2f} sec")
 
             # print(core_process_list)
 

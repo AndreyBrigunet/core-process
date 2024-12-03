@@ -17,20 +17,19 @@ This Python application (Python 3.10, [Core PyClient](https://github.com/datarhe
         external: true
     ```
 
-3. Build si start
+3. Seteaza Enviroments
+
+- `CORE_ADDRESS` (lasa gol)
+- `CORE_USERNMAE` (default: unset)
+- `CORE_PASSWORD` (default: unset)
+- `PROCESS_REFERENCE` (default: rtmp:hls)
+- `SYNC_INTERVAL_SECONDS` (default: 10)
+
+
+4. Build si start
     ```sh
     git clone https://github.com/AndreyBrigunet/core-process.git
     cd core-process
     docker compose build
     docker compose up -d
     ```
-
-
-## Enviroments
-
-- `CORE_ADDRESS` (default: unset)
-- `CORE_USERNMAE` (default: unset)
-- `CORE_PASSWORD` (default: unset)
-- `PROCESS_REFERENCE` (default: rtmp:hls)
-- `SYNC_INTERVAL_SECONDS` (default: 10)
-
