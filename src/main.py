@@ -264,7 +264,7 @@ try:
         try:
             core_rtmp_list = measure_and_log("Fetching rtmp list", client.v3_rtmp_get)
 
-            if core_rtmp_list != last_core_rtmp_list:
+            if sorted(str(core_rtmp_list)) != sorted(str(last_core_rtmp_list)):
                 last_core_rtmp_list = core_rtmp_list
 
                 core_process_list = measure_and_log("Fetching process list", client.v3_process_get_list, reference=PROCESS_REFERENCE)
