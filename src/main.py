@@ -1,9 +1,11 @@
 import os
+import sys
 import time
 import re
 from copy import deepcopy
 from enum import Enum
 from jsonmerge import merge
+import logging, logging.config
 
 from core_client import Client
 from core_client.base.models.v3 import (
@@ -14,8 +16,8 @@ from core_client.base.models.v3 import (
 )
 
 # Local
-# from dotenv import load_dotenv
-# load_dotenv()
+from dotenv import load_dotenv
+load_dotenv()
 
 CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
@@ -23,6 +25,56 @@ CORE_PASSWORD = os.getenv('CORE_PASSWORD', '')
 
 PROCESS_REFERENCE = os.getenv('PROCESS_REFERENCE', 'rtmp:hls')
 SYNC_INTERVAL_SECONDS = int(os.getenv('SYNC_INTERVAL_SECONDS', 10))
+
+BASE_PATH = os.path.realpath(os.path.dirname(__file__))
+LOG_FILE = os.path.join(BASE_PATH, 'console.log')
+
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s %(levelname)s - %(message)s"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            'stream': 'ext://sys.stdout',
+        },
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "default",
+            "filename": LOG_FILE,
+            "mode": "a",
+            "encoding": "utf-8",
+            "maxBytes": 500000,
+            "backupCount": 2
+        }
+    },
+    "loggers": {
+        "console": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        }
+    },
+}
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger('console')
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    """Captura si logare exceptii neprevazute."""
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+    logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+sys.excepthook = handle_exception
+
+# logger end.
 
 process_config = ProcessConfig(
     id="dummy",
@@ -46,21 +98,26 @@ process_config = ProcessConfig(
             address="{memfs}/{processid}_{outputid}.m3u8",
             id="output_0",
             options=[
-                "-dn", "-sn",
                 "-map", "0:1",
                 "-codec:v", "copy",
                 "-map", "0:0",
                 "-codec:a", "copy",
                 "-f","hls",
+                "-hls_init_time", "0",
                 "-start_number","0",
-                "-hls_time","6",
-                "-hls_list_size","6",
-                "-hls_flags","append_list+delete_segments+program_date_time+temp_file",
-                "-hls_delete_threshold","4",
-                "-hls_segment_filename","{memfs}/{processid}_{outputid}_%04d.ts",
+                "-hls_time","8",
+                "-hls_list_size","10",
+                "-hls_flags","append_list+delete_segments+program_date_time",
+                "-hls_delete_threshold","1",
+                "-hls_start_number_source", "generic",
+                "-hls_allow_cache", "0",
+                "-hls_enc", "0",
+                "-hls_segment_filename","{memfs}/{processid}_{outputid}_%d.ts",
                 "-master_pl_name","{processid}.m3u8",
                 "-master_pl_publish_rate","2",
-                "-method","PUT"
+                "-method","PUT",
+                "-http_persistent", "0",
+                "-ignore_io_errors", "0"
             ],
             cleanup=[
                 ProcessConfigIOCleanup(
@@ -142,10 +199,10 @@ def create_processes(rtmp_process_list: list):
                     rtmp_process_config=rtmp_process.dict(),
                     core_process_config=core_process.config.dict()
                 ):
-                    print(f'update process id "{rtmp_process.id}"')
+                    logger.info(f'update process id "{rtmp_process.id}"')
                     client.v3_process_put(id=core_process.id, config=rtmp_process)
         if is_unknown:
-            print(f'create process id "{rtmp_process.id}"')
+            logger.info(f'create process id "{rtmp_process.id}"')
             client.v3_process_post(config=rtmp_process)
 
 
@@ -163,8 +220,18 @@ def clear_core_processes(rtmp_process_list: list):
                 if (rtmp_process.id == core_process.id and core_process.reference == PROCESS_REFERENCE):
                     is_unknown = False
             if is_unknown:
-                print(f'delete process id "{core_process.id}"')
+                logger.info(f'delete process id "{core_process.id}"')
                 client.v3_process_delete(id=core_process.id)
+
+
+def measure_and_log(action_name, func, *args, **kwargs):
+    """Masoara timpul unei funtii si logheaza rezultatul."""
+    start_time = time.time()
+    result = func(*args, **kwargs)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    logger.debug(f"{execution_time:.2f} sec - {action_name}")
+    return result
 
 
 # core connection and login
@@ -177,51 +244,44 @@ try:
     client.login()
 except Exception as e:
     error_message = (
-        f"base_url: {CORE_ADDRESS}\n"
-        f"username: {CORE_USERNAME}\n"
-        f"password: {CORE_PASSWORD}\n"
+        f"base_url: {CORE_ADDRESS} "
+        f"username: {CORE_USERNAME} "
+        f"password: {CORE_PASSWORD} "
         f"Error: {e}"
     )
-    print(error_message)
+    logger.error(error_message)
     raise RuntimeError(error_message)
 
 # start the loop
+last_core_rtmp_list = None
+
 try:
     while True:
         try:
-            input_process_list = []
-            start_time = time.time() 
-            core_rtmp_list = client.v3_rtmp_get()
-            end_time = time.time() 
-            execution_time = end_time - start_time
-            print(f"rtmp_get_list: {execution_time:.2f} sec")
-            # print(core_rtmp_list)
+            core_rtmp_list = measure_and_log("Fetching rtmp list", client.v3_rtmp_get)
 
-            # if core_rtmp_list:
-            start_time = time.time()
-            core_process_list = client.v3_process_get_list(reference=PROCESS_REFERENCE)
-            end_time = time.time() 
-            execution_time = end_time - start_time
-            print(f"process_get_list: {execution_time:.2f} sec")
+            if core_rtmp_list != last_core_rtmp_list:
+                last_core_rtmp_list = core_rtmp_list
 
-            # print(core_process_list)
+                core_process_list = measure_and_log("Fetching process list", client.v3_process_get_list, reference=PROCESS_REFERENCE)
+                # print(core_process_list)
 
-            # create a temp. list of stream file configs
-            input_process_list = create_process_config()
-            # print(input_process_list)
+                # create a temp. list of stream file configs
+                input_process_list = create_process_config()
+                # print(input_process_list)
 
 
-            # create or update stream file processes
-            create_processes(rtmp_process_list=input_process_list)
+                # create or update stream file processes
+                create_processes(rtmp_process_list=input_process_list)
 
-            # remove dropped stream file on core
-            clear_core_processes(rtmp_process_list=input_process_list)
+                # remove dropped stream file on core
+                clear_core_processes(rtmp_process_list=input_process_list)
 
         except Exception as e:
-            print(f"error: {e}")
+            logger.error(f"error: {e}")
 
         time.sleep(SYNC_INTERVAL_SECONDS)
 except KeyboardInterrupt:
-    print("Run return except: KeyboardInterrupt")
+    logger.debug("Run return except: KeyboardInterrupt")
 except SystemExit:
-    print("Run return except: SystemExit")
+    logger.debug("Run return except: SystemExit")
