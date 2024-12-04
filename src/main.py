@@ -16,8 +16,8 @@ from core_client.base.models.v3 import (
 )
 
 # Local
-from dotenv import load_dotenv
-load_dotenv()
+# from dotenv import load_dotenv
+# load_dotenv()
 
 CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
@@ -96,18 +96,19 @@ process_config = ProcessConfig(
     output=[
         ProcessConfigIO(
             address="{memfs}/{processid}_{outputid}.m3u8",
-            id="output_0",
+            id="0",
             options=[
                 "-map", "0:1",
                 "-codec:v", "copy",
                 "-map", "0:0",
                 "-codec:a", "copy",
                 "-f","hls",
+                "-bsf:v", "h264_mp4toannexb",
                 "-hls_init_time", "0",
                 "-start_number","0",
-                "-hls_time","8",
-                "-hls_list_size","10",
-                "-hls_flags","append_list+delete_segments+program_date_time",
+                "-hls_time","6",
+                "-hls_list_size","6",
+                "-hls_flags","append_list+delete_segments+program_date_time+temp_file",
                 "-hls_delete_threshold","1",
                 "-hls_start_number_source", "generic",
                 "-hls_allow_cache", "0",
@@ -199,11 +200,9 @@ def create_processes(rtmp_process_list: list):
                     rtmp_process_config=rtmp_process.dict(),
                     core_process_config=core_process.config.dict()
                 ):
-                    logger.info(f'update process id "{rtmp_process.id}"')
-                    client.v3_process_put(id=core_process.id, config=rtmp_process)
+                    measure_and_log(f'Update process id "{rtmp_process.id}"', client.v3_process_put, id=core_process.id, config=rtmp_process, log_level=logging.INFO)
         if is_unknown:
-            logger.info(f'create process id "{rtmp_process.id}"')
-            client.v3_process_post(config=rtmp_process)
+            measure_and_log(f'Create process id "{rtmp_process.id}"', client.v3_process_post, config=rtmp_process, log_level=logging.INFO)
 
 
 def clear_core_processes(rtmp_process_list: list):
@@ -220,17 +219,22 @@ def clear_core_processes(rtmp_process_list: list):
                 if (rtmp_process.id == core_process.id and core_process.reference == PROCESS_REFERENCE):
                     is_unknown = False
             if is_unknown:
-                logger.info(f'delete process id "{core_process.id}"')
-                client.v3_process_delete(id=core_process.id)
+                measure_and_log(f'Delete process id "{core_process.id}"', client.v3_process_delete, id=core_process.id, log_level=logging.INFO)
 
 
-def measure_and_log(action_name, func, *args, **kwargs):
+def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs):
     """Masoara timpul unei funtii si logheaza rezultatul."""
     start_time = time.time()
     result = func(*args, **kwargs)
     end_time = time.time()
     execution_time = end_time - start_time
-    logger.debug(f"{execution_time:.2f} sec - {action_name}")
+
+    # Logare cu nivelul specificat
+    time_exec = f"{execution_time:.2f} sec"
+    if (log_level == logging.INFO):
+        time_exec = f" {execution_time:.2f} sec"
+
+    logger.log(log_level, f"{time_exec} - {action_name}")
     return result
 
 
