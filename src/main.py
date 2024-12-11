@@ -1,3 +1,5 @@
+import requests
+import json
 import os
 import sys
 import time
@@ -25,6 +27,7 @@ CORE_PASSWORD = os.getenv('CORE_PASSWORD', '')
 
 PROCESS_REFERENCE = os.getenv('PROCESS_REFERENCE', 'rtmp:hls')
 SYNC_INTERVAL_SECONDS = int(os.getenv('SYNC_INTERVAL_SECONDS', 10))
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 BASE_PATH = os.path.realpath(os.path.dirname(__file__))
 LOG_FILE = os.path.join(BASE_PATH, 'console.log')
@@ -204,6 +207,8 @@ def create_processes(rtmp_process_list: list):
         if is_unknown:
             measure_and_log(f'Create process id "{rtmp_process.id}"', client.v3_process_post, config=rtmp_process, log_level=logging.INFO)
 
+        send_webhook_response(rtmp_process.id)
+
 
 def clear_core_processes(rtmp_process_list: list):
     """removes all processes with PROCESS_REFERENCE
@@ -236,6 +241,43 @@ def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs)
 
     logger.log(log_level, f"{time_exec} - {action_name}")
     return result
+
+
+def send_webhook_response(rtmp_id):
+    if not WEBHOOK_URL:
+        return
+    
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "publish": [{
+            "stream": f"push/{rtmp_id}",
+            "protocol": "RTMP",
+            "type": "push",
+            "time": int(time.time() * 1000)
+        }]
+    }
+
+    try:
+        start_time = time.time()
+
+        response = requests.post(
+            WEBHOOK_URL, headers=headers, data=json.dumps(data))
+
+        end_time = time.time()
+        execution_time = end_time - start_time
+
+        if response.status_code == 200:
+            logger.info(
+                f" {execution_time:.2f} sec - Send Webhook: {rtmp_id}")
+        else:
+            logger.error(
+                f"{execution_time:.2f} sec - Error: Send Webhook: {rtmp_id}, status: {response.status_code}")
+
+    except Exception as e:
+        logger.error(f"Error: {e}")
 
 
 # core connection and login
