@@ -160,7 +160,7 @@ process_config = ProcessConfig(
 
 def is_valid_stream_key(value: str):
     """ """
-    pattern = r"^[A-Z]{4}-[a-z0-9]{6}$"
+    pattern = os.getenv("STREAM_KEY_PATTERN", r"^[A-Z]{4}-[a-z0-9]{6}$")
     return bool(re.match(pattern, value))
 
 
