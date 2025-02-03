@@ -25,6 +25,7 @@ from core_client.base.models import Error
 CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
 CORE_PASSWORD = os.getenv('CORE_PASSWORD', '')
+SERVER = os.getenv('SERVER', 'localhost')
 FILESYSTEMS = os.getenv('FILESYSTEMS', 'memfs')
 
 PROCESS_REFERENCE = os.getenv('PROCESS_REFERENCE', 'rtmp:hls')
@@ -262,12 +263,11 @@ def send_webhook_response(rtmp_id):
     }
 
     data = {
-        "publish": [{
-            "stream": f"push/{rtmp_id}",
-            "protocol": "RTMP",
-            "type": "push",
-            "time": int(time.time() * 1000)
-        }]
+        "stream_id": rtmp_id,
+        "protocol": "RTMP",
+        "server": SERVER,
+        "type": "push",
+        "time": int(time.time() * 1000)
     }
 
     try:
