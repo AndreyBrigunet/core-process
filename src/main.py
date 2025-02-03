@@ -16,6 +16,7 @@ from core_client.base.models.v3 import (
     ProcessConfigIO,
     ProcessConfigIOCleanup
 )
+from core_client.base.models import Error
 
 # Local
 # from dotenv import load_dotenv
@@ -230,12 +231,12 @@ def clear_core_processes(rtmp_process_list: list):
                     is_unknown = False
             if is_unknown:
                 measure_and_log(f'Delete process id "{core_process.id}"', client.v3_process_delete, id=core_process.id, log_level=logging.INFO)
-
-
+        
 def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs):
     """Masoara timpul unei funtii si logheaza rezultatul."""
     start_time = time.time()
     result = func(*args, **kwargs)
+
     end_time = time.time()
     execution_time = end_time - start_time
 
@@ -244,7 +245,11 @@ def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs)
     if (log_level == logging.INFO):
         time_exec = f" {execution_time:.2f} sec"
 
-    logger.log(log_level, f"{time_exec} - {action_name}")
+    if isinstance(result, Error):
+        logger.error(log_level, f"{time_exec} - {action_name} - {result.message}")
+    else:
+        logger.log(log_level, f"{time_exec} - {action_name}")
+    
     return result
 
 
