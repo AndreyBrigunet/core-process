@@ -24,6 +24,7 @@ from core_client.base.models.v3 import (
 CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
 CORE_PASSWORD = os.getenv('CORE_PASSWORD', '')
+FILESYSTEMS = os.getenv('FILESYSTEMS', 'memfs')
 
 PROCESS_REFERENCE = os.getenv('PROCESS_REFERENCE', 'rtmp:hls')
 SYNC_INTERVAL_SECONDS = int(os.getenv('SYNC_INTERVAL_SECONDS', 10))
@@ -68,6 +69,11 @@ LOGGING_CONFIG = {
 logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger('console')
 
+if FILESYSTEMS not in ['diskfs', 'memfs']:
+    raise ValueError(f"Invalid FILESYSTEMS value: {filesystems}. Must be 'diskfs' or 'memfs'.")
+
+logger.info(f"Using filesystem: {FILESYSTEMS}")
+
 def handle_exception(exc_type, exc_value, exc_traceback):
     """Captura si logare exceptii neprevazute."""
     if issubclass(exc_type, KeyboardInterrupt):
@@ -76,7 +82,6 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 
 sys.excepthook = handle_exception
-
 # logger end.
 
 process_config = ProcessConfig(
@@ -98,49 +103,49 @@ process_config = ProcessConfig(
     ],
     output=[
         ProcessConfigIO(
-            address="{memfs}/{processid}_{outputid}.m3u8",
+            address=f"{{{FILESYSTEMS}}}/{{processid}}_{{outputid}}.m3u8",
             id="0",
             options=[
                 "-map", "0:1",
                 "-codec:v", "copy",
                 "-map", "0:0",
                 "-codec:a", "copy",
-                "-f","hls",
+                "-f", "hls",
                 "-bsf:v", "h264_mp4toannexb",
                 "-hls_init_time", "0",
-                "-start_number","0",
-                "-hls_time","6",
-                "-hls_list_size","6",
-                "-hls_flags","append_list+delete_segments+program_date_time+temp_file",
+                "-start_number", "0",
+                "-hls_time", "6",
+                "-hls_list_size", "6",
+                "-hls_flags", "append_list+delete_segments+program_date_time+temp_file",
                 "-hls_delete_threshold","1",
                 "-hls_start_number_source", "generic",
                 "-hls_allow_cache", "0",
                 "-hls_enc", "0",
-                "-hls_segment_filename","{memfs}/{processid}_{outputid}_%d.ts",
-                "-master_pl_name","{processid}.m3u8",
-                "-master_pl_publish_rate","2",
-                "-method","PUT",
+                "-hls_segment_filename", f"{{{FILESYSTEMS}}}/{{processid}}_{{outputid}}_%d.ts",
+                "-master_pl_name", "{processid}.m3u8",
+                "-master_pl_publish_rate", "2",
+                "-method", "PUT",
                 "-http_persistent", "0",
                 "-ignore_io_errors", "0"
             ],
             cleanup=[
                 ProcessConfigIOCleanup(
-                    pattern="memfs:/{processid}**",
+                    pattern=f"{FILESYSTEMS}:/{{processid}}**",
                     purge_on_delete=True
                 ),
                 ProcessConfigIOCleanup(
-                    pattern="memfs:/{processid}_{outputid}.m3u8",
+                    pattern=f"{FILESYSTEMS}:/{{processid}}_{{outputid}}.m3u8",
                     max_file_age_seconds=60,
                     purge_on_delete=True
                 ),
                 ProcessConfigIOCleanup(
-                    pattern="memfs:/{processid}_{outputid}_**.ts",
+                    pattern=f"{FILESYSTEMS}:/{{processid}}_{{outputid}}_**.ts",
                     max_files=24,
                     max_file_age_seconds=60,
                     purge_on_delete=True
                 ),
                 ProcessConfigIOCleanup(
-                    pattern="memfs:/{processid}.m3u8",
+                    pattern=f"{FILESYSTEMS}::/{{processid}}.m3u8",
                     max_file_age_seconds=60,
                     purge_on_delete=True
                 )
