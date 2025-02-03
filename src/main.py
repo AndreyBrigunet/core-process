@@ -231,7 +231,7 @@ def clear_core_processes(rtmp_process_list: list):
                     is_unknown = False
             if is_unknown:
                 measure_and_log(f'Delete process id "{core_process.id}"', client.v3_process_delete, id=core_process.id, log_level=logging.INFO)
-        
+
 def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs):
     """Masoara timpul unei funtii si logheaza rezultatul."""
     start_time = time.time()
@@ -246,17 +246,17 @@ def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs)
         time_exec = f" {execution_time:.2f} sec"
 
     if isinstance(result, Error):
-        logger.error(log_level, f"{time_exec} - {action_name} - {result.message}")
+        logger.error(f"{time_exec} - {action_name} - {result.message}")
     else:
         logger.log(log_level, f"{time_exec} - {action_name}")
-    
+
     return result
 
 
 def send_webhook_response(rtmp_id):
     if not WEBHOOK_URL:
         return
-    
+
     headers = {
         "Content-Type": "application/json"
     }
