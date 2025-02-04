@@ -211,10 +211,10 @@ def create_processes(rtmp_process_list: list):
                     core_process_config=core_process.config.dict()
                 ):
                     measure_and_log(f'Update process id "{rtmp_process.id}"', client.v3_process_put, id=core_process.id, config=rtmp_process, log_level=logging.INFO)
+                    send_webhook_response(rtmp_process.id, "publish")
         if is_unknown:
             measure_and_log(f'Create process id "{rtmp_process.id}"', client.v3_process_post, config=rtmp_process, log_level=logging.INFO)
-
-        send_webhook_response(rtmp_process.id)
+            send_webhook_response(rtmp_process.id, "publish")
 
 
 def clear_core_processes(rtmp_process_list: list):
@@ -232,6 +232,7 @@ def clear_core_processes(rtmp_process_list: list):
                     is_unknown = False
             if is_unknown:
                 measure_and_log(f'Delete process id "{core_process.id}"', client.v3_process_delete, id=core_process.id, log_level=logging.INFO)
+                send_webhook_response(rtmp_process.id, "unpublish")
 
 def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs):
     """Masoara timpul unei funtii si logheaza rezultatul."""
@@ -254,7 +255,7 @@ def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs)
     return result
 
 
-def send_webhook_response(rtmp_id):
+def send_webhook_response(rtmp_id, type):
     if not WEBHOOK_URL:
         return
 
@@ -266,7 +267,7 @@ def send_webhook_response(rtmp_id):
         "stream_id": rtmp_id,
         "protocol": "RTMP",
         "server": SERVER,
-        "type": "push",
+        "type": type,
         "time": int(time.time() * 1000)
     }
 
