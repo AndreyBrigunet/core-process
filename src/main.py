@@ -25,7 +25,6 @@ from core_client.base.models import Error
 CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
 CORE_PASSWORD = os.getenv('CORE_PASSWORD', '')
-SERVER = os.getenv('SERVER', 'localhost')
 FILESYSTEMS = os.getenv('FILESYSTEMS', 'memfs')
 
 PROCESS_REFERENCE = os.getenv('PROCESS_REFERENCE', 'rtmp:hls')
@@ -211,10 +210,10 @@ def create_processes(rtmp_process_list: list):
                     core_process_config=core_process.config.dict()
                 ):
                     measure_and_log(f'Update process id "{rtmp_process.id}"', client.v3_process_put, id=core_process.id, config=rtmp_process, log_level=logging.INFO)
-                    send_webhook_response(rtmp_process.id, "publish")
+                    send_webhook(rtmp_process.id, "publish")
         if is_unknown:
             measure_and_log(f'Create process id "{rtmp_process.id}"', client.v3_process_post, config=rtmp_process, log_level=logging.INFO)
-            send_webhook_response(rtmp_process.id, "publish")
+            send_webhook(rtmp_process.id, "publish")
 
 
 def clear_core_processes(rtmp_process_list: list):
@@ -232,7 +231,8 @@ def clear_core_processes(rtmp_process_list: list):
                     is_unknown = False
             if is_unknown:
                 measure_and_log(f'Delete process id "{core_process.id}"', client.v3_process_delete, id=core_process.id, log_level=logging.INFO)
-                send_webhook_response(rtmp_process.id, "unpublish")
+                send_webhook(core_process.id, "unpublish")
+
 
 def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs):
     """Masoara timpul unei funtii si logheaza rezultatul."""
@@ -255,7 +255,7 @@ def measure_and_log(action_name, func, *args, log_level=logging.DEBUG, **kwargs)
     return result
 
 
-def send_webhook_response(rtmp_id, type):
+def send_webhook(rtmp_id, type):
     if not WEBHOOK_URL:
         return
 
@@ -266,7 +266,7 @@ def send_webhook_response(rtmp_id, type):
     data = {
         "stream_id": rtmp_id,
         "protocol": "RTMP",
-        "server": SERVER,
+        "host": HOST,
         "type": type,
         "time": int(time.time() * 1000)
     }
@@ -282,10 +282,10 @@ def send_webhook_response(rtmp_id, type):
 
         if response.status_code == 200:
             logger.info(
-                f" {execution_time:.2f} sec - Send Webhook: {rtmp_id}")
+                f" {execution_time:.2f} sec - Send Webhook url: {WEBHOOK_URL}, rtmp_id: {rtmp_id}")
         else:
             logger.error(
-                f"{execution_time:.2f} sec - Error: Send Webhook: {rtmp_id}, status: {response.status_code}")
+                f"{execution_time:.2f} sec - Error: Send Webhook url: {WEBHOOK_URL}, rtmp_id: {rtmp_id}, status: {response.status_code}")
 
     except Exception as e:
         logger.error(f"Error: {e}")
@@ -313,6 +313,11 @@ except Exception as e:
 last_core_rtmp_list = None
 
 try:
+    get_config = measure_and_log("Get config", client.v3_config_get)
+    HOST = get_config.config.host.name[0]
+
+    logger.info(f"Core host: {HOST}")
+
     while True:
         try:
             core_rtmp_list = measure_and_log("Fetching rtmp list", client.v3_rtmp_get)
