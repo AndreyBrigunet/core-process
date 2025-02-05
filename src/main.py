@@ -118,7 +118,7 @@ process_config = ProcessConfig(
                 "-hls_time", "6",
                 "-hls_list_size", "6",
                 "-hls_flags", "append_list+delete_segments+program_date_time+temp_file",
-                "-hls_delete_threshold","1",
+                "-hls_delete_threshold","2",
                 "-hls_start_number_source", "generic",
                 "-hls_allow_cache", "0",
                 "-hls_enc", "0",
@@ -126,7 +126,7 @@ process_config = ProcessConfig(
                 "-master_pl_name", "{processid}.m3u8",
                 "-master_pl_publish_rate", "2",
                 "-method", "PUT",
-                "-http_persistent", "0",
+                "-http_persistent", "1",
                 "-ignore_io_errors", "0"
             ],
             cleanup=[
