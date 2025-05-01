@@ -26,6 +26,9 @@ CORE_ADDRESS = os.getenv('CORE_ADDRESS', '')
 CORE_USERNAME = os.getenv('CORE_USERNAME', '')
 CORE_PASSWORD = os.getenv('CORE_PASSWORD', '')
 FILESYSTEMS = os.getenv('FILESYSTEMS', 'memfs')
+PROCESS_HLS_TIME = os.getenv('PROCESS_HLS_TIME', 6)
+PROCESS_HLS_TIME_SIZE = os.getenv('PROCESS_HLS_TIME_SIZE', 6)
+PROCESS_MAX_INPUT_BITRATE = os.getenv('PROCESS_MAX_INPUT_BITRATE', '15000')
 
 PROCESS_REFERENCE = os.getenv('PROCESS_REFERENCE', 'rtmp:hls')
 SYNC_INTERVAL_SECONDS = int(os.getenv('SYNC_INTERVAL_SECONDS', 10))
@@ -98,7 +101,10 @@ process_config = ProcessConfig(
                 "-thread_queue_size", "512",
                 "-probesize", "5000000",
                 "-analyzeduration", "3000000",
-                "-rtmp_enhanced_codecs", "hvc1,av01,vp09"
+                "-rtmp_enhanced_codecs", "hvc1,av01,vp09",
+                "-max_muxing_queue_size", "256",
+                "-b:v", f"{{{PROCESS_MAX_INPUT_BITRATE}}}k",
+                "-maxrate", f"{{{PROCESS_MAX_INPUT_BITRATE}}}k"
             ]
         )
     ],
@@ -115,8 +121,8 @@ process_config = ProcessConfig(
                 "-bsf:v", "h264_mp4toannexb",
                 "-hls_init_time", "0",
                 "-start_number", "0",
-                "-hls_time", "6",
-                "-hls_list_size", "6",
+                "-hls_time", f"{{{PROCESS_HLS_TIME}}}",
+                "-hls_list_size", f"{{{PROCESS_HLS_TIME_SIZE}}}",
                 "-hls_flags", "append_list+delete_segments+program_date_time+temp_file",
                 "-hls_delete_threshold","2",
                 "-hls_start_number_source", "generic",
@@ -155,8 +161,8 @@ process_config = ProcessConfig(
     ],
     limits=ProcessConfigLimit(
         cpu_usage=0,
-        memory_mbytes=150,
-        waitfor_seconds=0
+        memory_mbytes=100,
+        waitfor_seconds=20
     ),
     autostart=True,
     reconnect=True,
