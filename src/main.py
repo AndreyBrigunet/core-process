@@ -71,7 +71,7 @@ logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger('console')
 
 if FILESYSTEMS not in ['diskfs', 'memfs']:
-    raise ValueError(f"Invalid FILESYSTEMS value: {filesystems}. Must be 'diskfs' or 'memfs'.")
+    raise ValueError(f"Invalid FILESYSTEMS value: {FILESYSTEMS}. Must be 'diskfs' or 'memfs'.")
 
 logger.info(f"Using filesystem: {FILESYSTEMS}")
 
@@ -155,7 +155,7 @@ process_config = ProcessConfig(
     ],
     limits=ProcessConfigLimit(
         cpu_usage=0,
-        memory_mbytes=0,
+        memory_mbytes=150,
         waitfor_seconds=0
     ),
     autostart=True,
@@ -290,7 +290,6 @@ def send_webhook(rtmp_id, type):
     except Exception as e:
         logger.error(f"Error: {e}")
 
-
 # core connection and login
 try:
     client = Client(
@@ -322,21 +321,22 @@ try:
         try:
             core_rtmp_list = measure_and_log("Fetching rtmp list", client.v3_rtmp_get)
 
-            if sorted(str(core_rtmp_list)) != sorted(str(last_core_rtmp_list)):
+            # Verifică dacă listele sunt diferite
+            rtmp_names = set(str(rtmp.name) for rtmp in core_rtmp_list)
+            if last_core_rtmp_list is None or rtmp_names != set(str(rtmp.name) for rtmp in last_core_rtmp_list):
                 last_core_rtmp_list = core_rtmp_list
 
                 core_process_list = measure_and_log("Fetching process list", client.v3_process_get_list, reference=PROCESS_REFERENCE)
                 # print(core_process_list)
 
-                # create a temp. list of stream file configs
+                #  Creeaza lista de procese
                 input_process_list = create_process_config()
                 # print(input_process_list)
 
-
-                # create or update stream file processes
+                # Creeaza sau actualizeaza procesele stream
                 create_processes(rtmp_process_list=input_process_list)
 
-                # remove dropped stream file on core
+                # Elimina stream-urile care nu mai exista pe core
                 clear_core_processes(rtmp_process_list=input_process_list)
 
         except Exception as e:
