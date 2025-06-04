@@ -133,7 +133,7 @@ process_config = ProcessConfig(
                 "-method", "PUT",
                 "-http_persistent", "1",
                 "-ignore_io_errors", "0",
-                "-max_muxing_queue_size", "256",
+                "-max_muxing_queue_size", "256"
             ],
             cleanup=[
                 ProcessConfigIOCleanup(
