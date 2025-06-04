@@ -103,8 +103,8 @@ process_config = ProcessConfig(
                 "-analyzeduration", "3000000",
                 "-rtmp_enhanced_codecs", "hvc1,av01,vp09",
                 "-max_muxing_queue_size", "256",
-                "-b:v", f"{{{PROCESS_MAX_INPUT_BITRATE}}}k",
-                "-maxrate", f"{{{PROCESS_MAX_INPUT_BITRATE}}}k"
+                "-b:v", f"{PROCESS_MAX_INPUT_BITRATE}k",
+                "-maxrate", f"{PROCESS_MAX_INPUT_BITRATE}k"
             ]
         )
     ],
@@ -121,8 +121,8 @@ process_config = ProcessConfig(
                 "-bsf:v", "h264_mp4toannexb",
                 "-hls_init_time", "0",
                 "-start_number", "0",
-                "-hls_time", f"{{{PROCESS_HLS_TIME}}}",
-                "-hls_list_size", f"{{{PROCESS_HLS_TIME_SIZE}}}",
+                "-hls_time", f"{PROCESS_HLS_TIME}",
+                "-hls_list_size", f"{PROCESS_HLS_TIME_SIZE}",
                 "-hls_flags", "append_list+delete_segments+program_date_time+temp_file",
                 "-hls_delete_threshold","2",
                 "-hls_start_number_source", "generic",
