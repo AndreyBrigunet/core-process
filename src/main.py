@@ -101,9 +101,7 @@ process_config = ProcessConfig(
                 "-thread_queue_size", "512",
                 "-probesize", "5000000",
                 "-analyzeduration", "3000000",
-                "-rtmp_enhanced_codecs", "hvc1,av01,vp09",
-                "-b:v", f"{PROCESS_MAX_INPUT_BITRATE}k",
-                "-maxrate", f"{PROCESS_MAX_INPUT_BITRATE}k"
+                "-rtmp_enhanced_codecs", "hvc1,av01,vp09"
             ]
         )
     ],
@@ -116,6 +114,8 @@ process_config = ProcessConfig(
                 "-codec:v", "copy",
                 "-map", "0:0",
                 "-codec:a", "copy",
+                "-b:v", f"{PROCESS_MAX_INPUT_BITRATE}k",
+                "-maxrate", f"{PROCESS_MAX_INPUT_BITRATE}k",
                 "-f", "hls",
                 "-bsf:v", "h264_mp4toannexb",
                 "-hls_init_time", "0",
