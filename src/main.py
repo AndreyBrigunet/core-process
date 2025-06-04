@@ -102,7 +102,6 @@ process_config = ProcessConfig(
                 "-probesize", "5000000",
                 "-analyzeduration", "3000000",
                 "-rtmp_enhanced_codecs", "hvc1,av01,vp09",
-                "-max_muxing_queue_size", "256",
                 "-b:v", f"{PROCESS_MAX_INPUT_BITRATE}k",
                 "-maxrate", f"{PROCESS_MAX_INPUT_BITRATE}k"
             ]
@@ -133,7 +132,8 @@ process_config = ProcessConfig(
                 "-master_pl_publish_rate", "2",
                 "-method", "PUT",
                 "-http_persistent", "1",
-                "-ignore_io_errors", "0"
+                "-ignore_io_errors", "0",
+                "-max_muxing_queue_size", "256",
             ],
             cleanup=[
                 ProcessConfigIOCleanup(
